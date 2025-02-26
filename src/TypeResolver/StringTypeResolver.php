@@ -131,7 +131,12 @@ final class StringTypeResolver implements TypeResolverInterface
                 'bool', 'boolean' => Type::bool(),
                 'true' => Type::true(),
                 'false' => Type::false(),
-                'int', 'integer', 'positive-int', 'negative-int', 'non-positive-int', 'non-negative-int', 'non-zero-int' => Type::int(),
+                'int', 'integer' => Type::int(),
+                'positive-int' => Type::intRange(from: 1, explicitType: $node->name),
+                'negative-int' => Type::intRange(to: -1, explicitType: $node->name),
+                'non-positive-int' => Type::intRange(to: 0, explicitType: $node->name),
+                'non-negative-int' => Type::intRange(from: 0, explicitType: $node->name),
+                'non-zero-int' => BaseType::union(Type::intRange(to: -1), Type::intRange(from: 1)),
                 'float', 'double' => Type::float(),
                 'string' => BaseType::string(),
                 'class-string',
@@ -180,9 +185,27 @@ final class StringTypeResolver implements TypeResolverInterface
         if ($node instanceof GenericTypeNode) {
             $type = $this->getTypeFromNode($node->type, $typeContext);
 
-            // handle integer ranges as simple integers
+            // handle integer ranges
             if ($type->isIdentifiedBy(TypeIdentifier::INT)) {
-                return $type;
+                $getBoundaryFromNode = function (TypeNode $node) {
+                    if ($node instanceof IdentifierTypeNode) {
+                        return match ($node->name) {
+                            'min' => \PHP_INT_MIN,
+                            'max' => \PHP_INT_MAX,
+                            default => throw new \DomainException(\sprintf('Invalid int range value "%s".', $node->name)),
+                        };
+                    }
+
+                    if ($node->constExpr instanceof ConstExprIntegerNode) {
+                        return (int) $node->constExpr->value;
+                    }
+
+                    throw new \DomainException(\sprintf('Invalid int range expression "%s".', \get_class($node->constExpr)));
+                };
+
+                $boundaries = array_map(static fn (TypeNode $t): int => $getBoundaryFromNode($t), $node->genericTypes);
+
+                return Type::intRange($boundaries[0], $boundaries[1]);
             }
 
             $variableTypes = array_map(fn (TypeNode $t): BaseType => $this->getTypeFromNode($t, $typeContext), $node->genericTypes);

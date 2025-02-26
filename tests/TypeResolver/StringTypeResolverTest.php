@@ -4,12 +4,17 @@ namespace Radebatz\TypeInfoExtras\Tests\TypeResolver;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use Radebatz\TypeInfoExtras\Type\ExplicitType;
+use Radebatz\TypeInfoExtras\Type\IntRangeType;
+use Radebatz\TypeInfoExtras\Type\Type;
 use Radebatz\TypeInfoExtras\TypeResolver\StringTypeResolver;
 use Stringable;
 use Symfony\Component\TypeInfo\Tests\TypeResolver\StringTypeResolverTest as BaseTypeResolverTest;
-use Symfony\Component\TypeInfo\Type;
+use Symfony\Component\TypeInfo\Type as BaseType;
+use Symfony\Component\TypeInfo\Type\UnionType;
 use Symfony\Component\TypeInfo\TypeContext\TypeContext;
 use Symfony\Component\TypeInfo\TypeIdentifier;
+use const PHP_INT_MAX;
+use const PHP_INT_MIN;
 
 class StringTypeResolverTest extends BaseTypeResolverTest
 {
@@ -28,19 +33,37 @@ class StringTypeResolverTest extends BaseTypeResolverTest
             if (str_ends_with($typeName, '-string')) {
                 $set[0] = new ExplicitType(TypeIdentifier::STRING, $typeName);
             }
+            $set[0] = match ($typeName) {
+                'positive-int' => new IntRangeType(from: 1, to: PHP_INT_MAX, explicitType: $typeName),
+                'negative-int' => new IntRangeType(from: PHP_INT_MIN, to: -1, explicitType: $typeName),
+                'non-positive-int' => new IntRangeType(from: PHP_INT_MIN, to: 0, explicitType: $typeName),
+                'non-negative-int' => new IntRangeType(from: 0, to: PHP_INT_MAX, explicitType: $typeName),
+                'non-zero-int' => new UnionType(new IntRangeType(from: PHP_INT_MIN, to: -1), new IntRangeType(from: 1, to: PHP_INT_MAX)),
+                'int<0, 100>' => new IntRangeType(from: 0, to: 100),
+                default => $set[0],
+            };
 
             yield $key => $set;
         }
+
+        // int range
+        yield [Type::intRange(from: 1, explicitType: 'positive-int'), 'positive-int'];
+        yield [Type::intRange(from: 0, explicitType: 'non-negative-int'), 'non-negative-int'];
+        yield [Type::intRange(to: -1, explicitType: 'negative-int'), 'negative-int'];
+        yield [Type::intRange(to: 0, explicitType: 'non-positive-int'), 'non-positive-int'];
+        yield [Type::union(Type::intRange(to: -1), Type::intRange(from: 1)), 'non-zero-int'];
+        yield [Type::intRange(0, 100), 'int<0, 100>'];
+        yield [Type::intRange(), 'int<min, max>'];
     }
 
     #[DataProvider('extrasResolveDataProvider')]
-    public function testResolve(Type $expectedType, string $string, ?TypeContext $typeContext = null)
+    public function testResolve(BaseType $expectedType, string $string, ?TypeContext $typeContext = null)
     {
         $this->assertEquals($expectedType, $this->resolver->resolve($string, $typeContext));
     }
 
     #[DataProvider('extrasResolveDataProvider')]
-    public function testResolveStringable(Type $expectedType, string $string, ?TypeContext $typeContext = null)
+    public function testResolveStringable(BaseType $expectedType, string $string, ?TypeContext $typeContext = null)
     {
         $this->assertEquals($expectedType, $this->resolver->resolve(new class($string) implements Stringable {
             public function __construct(private string $value)

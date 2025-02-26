@@ -24,4 +24,9 @@ trait TypeFactoryTrait
     {
         return new ExplicitType($identifier, $explicitType);
     }
+
+    public static function intRange(int $from = \PHP_INT_MIN, int $to = \PHP_INT_MAX, ?string $explicitType = null): IntRangeType
+    {
+        return new IntRangeType($from, $to, $explicitType);
+    }
 }
