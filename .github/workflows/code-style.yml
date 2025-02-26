@@ -1,0 +1,28 @@
+name: code-style
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  php-cs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout repository
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: 'highest'
+
+      - name: Check Code Style
+        run: composer lint
