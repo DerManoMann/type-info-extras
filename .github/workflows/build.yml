@@ -1,0 +1,40 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      fail-fast: true
+      matrix:
+        operating-system: [ ubuntu-latest ]
+        php: [ '8.2', '8.3', '8.4', '8.5' ]
+        dependencies: [ 'lowest', 'highest' ]
+
+    name: PHP ${{ matrix.php }} on ${{ matrix.operating-system }} with ${{ matrix.dependencies }} dependencies
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout repository
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: pcov
+
+      - name: Composer install
+        uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: ${{ matrix.dependencies }}
+          composer-options: "${{ matrix.composer-options }}"
+
+      - name: PHPUnit Tests
+        run: vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-text
