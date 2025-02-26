@@ -11,14 +11,14 @@ class IntRangeTypeTest extends TestCase
 {
     public function testToString()
     {
-        $this->assertSame('int<0, max>', (string)new IntRangeType(from: 0, explicitType: 'int<0, max>'));
-        $this->assertSame('int<min, 0>', (string)new IntRangeType(to: 0, explicitType: 'int<min, 0>'));
-        $this->assertSame('int<1, max>', (string)new IntRangeType(from: 1, explicitType: 'int<1, max>'));
-        $this->assertSame('int<-3, 5>', (string)new IntRangeType(from: -3, to: 5, explicitType: 'int<-3, 5>'));
-        $this->assertSame('int<min, -1>', (string)new IntRangeType(to: -1, explicitType: 'int<min, -1>'));
-        $this->assertSame('int<-3, 5>', (string)new IntRangeType(from: -3, to: 5, explicitType: 'int<-3, 5>'));
-        $this->assertSame('int<min, max>', (string)new IntRangeType(explicitType: 'int<min, max>'));
-        $this->assertSame('int<min, 5>', (string)new IntRangeType(to: 5, explicitType: 'int<min, 5>'));
+        $this->assertSame('int<0, max>', (string) new IntRangeType(from: 0, explicitType: 'int<0, max>'));
+        $this->assertSame('int<min, 0>', (string) new IntRangeType(to: 0, explicitType: 'int<min, 0>'));
+        $this->assertSame('int<1, max>', (string) new IntRangeType(from: 1, explicitType: 'int<1, max>'));
+        $this->assertSame('int<-3, 5>', (string) new IntRangeType(from: -3, to: 5, explicitType: 'int<-3, 5>'));
+        $this->assertSame('int<min, -1>', (string) new IntRangeType(to: -1, explicitType: 'int<min, -1>'));
+        $this->assertSame('int<-3, 5>', (string) new IntRangeType(from: -3, to: 5, explicitType: 'int<-3, 5>'));
+        $this->assertSame('int<min, max>', (string) new IntRangeType(explicitType: 'int<min, max>'));
+        $this->assertSame('int<min, 5>', (string) new IntRangeType(to: 5, explicitType: 'int<min, 5>'));
     }
 
     public function testAccepts()

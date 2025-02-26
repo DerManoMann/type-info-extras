@@ -9,14 +9,15 @@ use Radebatz\TypeInfoExtras\Type\ExplicitType;
 use Radebatz\TypeInfoExtras\Type\IntRangeType;
 use Radebatz\TypeInfoExtras\Type\Type;
 use Radebatz\TypeInfoExtras\TypeResolver\StringTypeResolver;
-use Stringable;
 use Symfony\Component\TypeInfo\Tests\Fixtures\Dummy;
 use Symfony\Component\TypeInfo\Tests\TypeResolver\StringTypeResolverTest as BaseTypeResolverTest;
 use Symfony\Component\TypeInfo\Type as BaseType;
 use Symfony\Component\TypeInfo\Type\UnionType;
 use Symfony\Component\TypeInfo\TypeContext\TypeContext;
 use Symfony\Component\TypeInfo\TypeIdentifier;
+
 use function sprintf;
+
 use const PHP_INT_MAX;
 use const PHP_INT_MIN;
 
@@ -77,7 +78,7 @@ class StringTypeResolverTest extends BaseTypeResolverTest
     #[DataProvider('extrasResolveDataProvider')]
     public function testResolveStringable(BaseType $expectedType, string $string, ?TypeContext $typeContext = null)
     {
-        $this->assertEquals($expectedType, $this->resolver->resolve(new class($string) implements Stringable {
+        $this->assertEquals($expectedType, $this->resolver->resolve(new class ($string) implements \Stringable {
             public function __construct(private string $value)
             {
             }

@@ -10,7 +10,7 @@ use Symfony\Component\TypeInfo\TypeIdentifier;
  *
  * When using this library either code would have to check for `BuiltinType|ExplicitType` or just rely on `Type::getTypeIdentifier()`.
  *
- * @template T of TypeIdentifier::INT|TypeIdentifier::STRING
+ * @template T of TypeIdentifier
  */
 class ExplicitType extends Type
 {

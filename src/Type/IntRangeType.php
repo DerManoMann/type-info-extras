@@ -2,7 +2,6 @@
 
 namespace Radebatz\TypeInfoExtras\Type;
 
-use Symfony\Component\TypeInfo\Type\BuiltinType;
 use Symfony\Component\TypeInfo\TypeIdentifier;
 
 /**

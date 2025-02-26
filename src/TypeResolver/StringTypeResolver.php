@@ -65,13 +65,8 @@ final class StringTypeResolver implements TypeResolverInterface
 
     public function __construct(?Lexer $lexer = null, ?TypeParser $parser = null)
     {
-        if (\class_exists(ParserConfig::class)) {
-            $this->lexer = $lexer ?? new Lexer(new ParserConfig([]));
-            $this->parser = $parser ?? new TypeParser($config = new ParserConfig([]), new ConstExprParser($config));
-        } else {
-            $this->lexer = $lexer ?? new Lexer();
-            $this->parser = $parser ?? new TypeParser(new ConstExprParser());
-        }
+        $this->lexer = $lexer ?? new Lexer(new ParserConfig([]));
+        $this->parser = $parser ?? new TypeParser($config = new ParserConfig([]), new ConstExprParser($config));
     }
 
     public function resolve(mixed $subject, ?TypeContext $typeContext = null): BaseType
@@ -94,7 +89,7 @@ final class StringTypeResolver implements TypeResolverInterface
 
     private function getTypeFromNode(TypeNode $node, ?TypeContext $typeContext): BaseType
     {
-        $typeIsCollectionObject = fn(BaseType $type): bool => $type->isIdentifiedBy(\Traversable::class) || $type->isIdentifiedBy(\ArrayAccess::class);
+        $typeIsCollectionObject = fn (BaseType $type): bool => $type->isIdentifiedBy(\Traversable::class) || $type->isIdentifiedBy(\ArrayAccess::class);
 
         if ($node instanceof CallableTypeNode) {
             return Type::callable();
@@ -203,19 +198,19 @@ final class StringTypeResolver implements TypeResolverInterface
                         };
                     }
 
-                    if ($node->constExpr instanceof ConstExprIntegerNode) {
-                        return (int)$node->constExpr->value;
+                    if ($node instanceof ConstTypeNode && $node->constExpr instanceof ConstExprIntegerNode) {
+                        return (int) $node->constExpr->value;
                     }
 
-                    throw new \DomainException(\sprintf('Invalid int range expression "%s".', \get_class($node->constExpr)));
+                    throw new \DomainException(\sprintf('Invalid int range expression "%s".', \get_class($node)));
                 };
 
-                $boundaries = array_map(static fn(TypeNode $t): int => $getBoundaryFromNode($t), $node->genericTypes);
+                $boundaries = array_map(static fn (TypeNode $t): int => $getBoundaryFromNode($t), $node->genericTypes);
 
                 return Type::intRange($boundaries[0], $boundaries[1]);
             }
 
-            $variableTypes = array_map(fn(TypeNode $t): BaseType => $this->getTypeFromNode($t, $typeContext), $node->genericTypes);
+            $variableTypes = array_map(fn (TypeNode $t): BaseType => $this->getTypeFromNode($t, $typeContext), $node->genericTypes);
 
             if ($type instanceof CollectionType) {
                 $asList = $type->isList();
@@ -271,7 +266,7 @@ final class StringTypeResolver implements TypeResolverInterface
         }
 
         if ($node instanceof IntersectionTypeNode) {
-            return Type::intersection(...array_map(fn(TypeNode $t): BaseType => $this->getTypeFromNode($t, $typeContext), $node->types));
+            return Type::intersection(...array_map(fn (TypeNode $t): BaseType => $this->getTypeFromNode($t, $typeContext), $node->types));
         }
 
         throw new \DomainException(\sprintf('Unhandled "%s" node.', $node::class));

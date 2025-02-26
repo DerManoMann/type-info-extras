@@ -1,0 +1,7 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\TypeInfo\\Type\\UnionType\<Symfony\\Component\\TypeInfo\\Type\>\:\:accepts\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Type/IntRangeTypeTest.php
