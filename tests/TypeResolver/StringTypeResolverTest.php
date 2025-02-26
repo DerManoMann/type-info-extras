@@ -3,16 +3,20 @@
 namespace Radebatz\TypeInfoExtras\Tests\TypeResolver;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use Radebatz\TypeInfoExtras\Tests\Fixtures\DummyInterface;
+use Radebatz\TypeInfoExtras\Tests\Fixtures\DummyTrait;
 use Radebatz\TypeInfoExtras\Type\ExplicitType;
 use Radebatz\TypeInfoExtras\Type\IntRangeType;
 use Radebatz\TypeInfoExtras\Type\Type;
 use Radebatz\TypeInfoExtras\TypeResolver\StringTypeResolver;
 use Stringable;
+use Symfony\Component\TypeInfo\Tests\Fixtures\Dummy;
 use Symfony\Component\TypeInfo\Tests\TypeResolver\StringTypeResolverTest as BaseTypeResolverTest;
 use Symfony\Component\TypeInfo\Type as BaseType;
 use Symfony\Component\TypeInfo\Type\UnionType;
 use Symfony\Component\TypeInfo\TypeContext\TypeContext;
 use Symfony\Component\TypeInfo\TypeIdentifier;
+use function sprintf;
 use const PHP_INT_MAX;
 use const PHP_INT_MIN;
 
@@ -33,6 +37,7 @@ class StringTypeResolverTest extends BaseTypeResolverTest
             if (str_ends_with($typeName, '-string')) {
                 $set[0] = new ExplicitType(TypeIdentifier::STRING, $typeName);
             }
+
             $set[0] = match ($typeName) {
                 'positive-int' => new IntRangeType(from: 1, to: PHP_INT_MAX, explicitType: $typeName),
                 'negative-int' => new IntRangeType(from: PHP_INT_MIN, to: -1, explicitType: $typeName),
@@ -54,6 +59,13 @@ class StringTypeResolverTest extends BaseTypeResolverTest
         yield [Type::union(Type::intRange(to: -1), Type::intRange(from: 1)), 'non-zero-int'];
         yield [Type::intRange(0, 100), 'int<0, 100>'];
         yield [Type::intRange(), 'int<min, max>'];
+
+        yield [Type::explicit(TypeIdentifier::STRING, 'class-string'), 'class-string'];
+        yield [Type::classLike('class-string', Type::object(Dummy::class)), sprintf('class-string<%s>', Dummy::class)];
+        yield [Type::explicit(TypeIdentifier::STRING, 'trait-string'), 'trait-string'];
+        yield [Type::classLike('trait-string', Type::object(DummyTrait::class)), sprintf('trait-string<%s>', DummyTrait::class)];
+        yield [Type::explicit(TypeIdentifier::STRING, 'interface-string'), 'interface-string'];
+        yield [Type::classLike('interface-string', Type::object(DummyInterface::class)), sprintf('interface-string<%s>', DummyInterface::class)];
     }
 
     #[DataProvider('extrasResolveDataProvider')]

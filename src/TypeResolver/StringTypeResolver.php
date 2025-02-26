@@ -9,6 +9,8 @@
 
 namespace Radebatz\TypeInfoExtras\TypeResolver;
 
+use ArrayAccess;
+use DomainException;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprArrayNode;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprFalseNode;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprFloatNode;
@@ -33,16 +35,31 @@ use PHPStan\PhpDocParser\Parser\ConstExprParser;
 use PHPStan\PhpDocParser\Parser\TokenIterator;
 use PHPStan\PhpDocParser\Parser\TypeParser;
 use PHPStan\PhpDocParser\ParserConfig;
+use Radebatz\TypeInfoExtras\Type\ExplicitType;
 use Radebatz\TypeInfoExtras\Type\Type;
+use ReflectionClass;
+use Stringable;
 use Symfony\Component\TypeInfo\Exception\InvalidArgumentException;
 use Symfony\Component\TypeInfo\Exception\UnsupportedException;
 use Symfony\Component\TypeInfo\Type as BaseType;
 use Symfony\Component\TypeInfo\Type\BuiltinType;
 use Symfony\Component\TypeInfo\Type\CollectionType;
+use Symfony\Component\TypeInfo\Type\ExplicitStringType;
 use Symfony\Component\TypeInfo\Type\GenericType;
+use Symfony\Component\TypeInfo\Type\ObjectType;
 use Symfony\Component\TypeInfo\TypeContext\TypeContext;
 use Symfony\Component\TypeInfo\TypeIdentifier;
 use Symfony\Component\TypeInfo\TypeResolver\TypeResolverInterface;
+use Throwable;
+use Traversable;
+use UnitEnum;
+use function count;
+use function get_class;
+use function in_array;
+use function is_string;
+use function sprintf;
+use const PHP_INT_MAX;
+use const PHP_INT_MIN;
 
 /**
  * Resolves type for a given string.
@@ -69,10 +86,10 @@ final class StringTypeResolver implements TypeResolverInterface
 
     public function resolve(mixed $subject, ?TypeContext $typeContext = null): BaseType
     {
-        if ($subject instanceof \Stringable) {
-            $subject = (string) $subject;
-        } elseif (!\is_string($subject)) {
-            throw new UnsupportedException(\sprintf('Expected subject to be a "string", "%s" given.', get_debug_type($subject)), $subject);
+        if ($subject instanceof Stringable) {
+            $subject = (string)$subject;
+        } elseif (!is_string($subject)) {
+            throw new UnsupportedException(sprintf('Expected subject to be a "string", "%s" given.', get_debug_type($subject)), $subject);
         }
 
         try {
@@ -80,14 +97,14 @@ final class StringTypeResolver implements TypeResolverInterface
             $node = $this->parser->parse($tokens);
 
             return $this->getTypeFromNode($node, $typeContext);
-        } catch (\DomainException $e) {
-            throw new UnsupportedException(\sprintf('Cannot resolve "%s".', $subject), $subject, previous: $e);
+        } catch (DomainException $e) {
+            throw new UnsupportedException(sprintf('Cannot resolve "%s".', $subject), $subject, previous: $e);
         }
     }
 
     private function getTypeFromNode(TypeNode $node, ?TypeContext $typeContext): BaseType
     {
-        $typeIsCollectionObject = fn (BaseType $type): bool => $type->isIdentifiedBy(\Traversable::class) || $type->isIdentifiedBy(\ArrayAccess::class);
+        $typeIsCollectionObject = fn(BaseType $type): bool => $type->isIdentifiedBy(Traversable::class) || $type->isIdentifiedBy(ArrayAccess::class);
 
         if ($node instanceof CallableTypeNode) {
             return Type::callable();
@@ -107,7 +124,7 @@ final class StringTypeResolver implements TypeResolverInterface
 
         if ($node instanceof ThisTypeNode) {
             if (null === $typeContext) {
-                throw new InvalidArgumentException(\sprintf('A "%s" must be provided to resolve "$this".', TypeContext::class));
+                throw new InvalidArgumentException(sprintf('A "%s" must be provided to resolve "$this".', TypeContext::class));
             }
 
             return Type::object($typeContext->getCalledClass());
@@ -122,7 +139,7 @@ final class StringTypeResolver implements TypeResolverInterface
                 ConstExprNullNode::class => Type::null(),
                 ConstExprStringNode::class => Type::string(),
                 ConstExprTrueNode::class => Type::true(),
-                default => throw new \DomainException(\sprintf('Unhandled "%s" constant expression.', $node->constExpr::class)),
+                default => throw new DomainException(sprintf('Unhandled "%s" constant expression.', $node->constExpr::class)),
             };
         }
 
@@ -163,9 +180,9 @@ final class StringTypeResolver implements TypeResolverInterface
                 'scalar' => Type::union(Type::int(), Type::float(), Type::string(), Type::bool()),
                 'number' => Type::union(Type::int(), Type::float()),
                 'numeric' => Type::union(Type::int(), Type::float(), Type::string()),
-                'self' => $typeContext ? Type::object($typeContext->getDeclaringClass()) : throw new InvalidArgumentException(\sprintf('A "%s" must be provided to resolve "self".', TypeContext::class)),
-                'static' => $typeContext ? Type::object($typeContext->getCalledClass()) : throw new InvalidArgumentException(\sprintf('A "%s" must be provided to resolve "static".', TypeContext::class)),
-                'parent' => $typeContext ? Type::object($typeContext->getParentClass()) : throw new InvalidArgumentException(\sprintf('A "%s" must be provided to resolve "parent".', TypeContext::class)),
+                'self' => $typeContext ? Type::object($typeContext->getDeclaringClass()) : throw new InvalidArgumentException(sprintf('A "%s" must be provided to resolve "self".', TypeContext::class)),
+                'static' => $typeContext ? Type::object($typeContext->getCalledClass()) : throw new InvalidArgumentException(sprintf('A "%s" must be provided to resolve "static".', TypeContext::class)),
+                'parent' => $typeContext ? Type::object($typeContext->getParentClass()) : throw new InvalidArgumentException(sprintf('A "%s" must be provided to resolve "parent".', TypeContext::class)),
                 'void' => Type::void(),
                 'never', 'never-return', 'never-returns', 'no-return' => Type::never(),
                 default => $this->resolveCustomIdentifier($node->name, $typeContext),
@@ -190,25 +207,25 @@ final class StringTypeResolver implements TypeResolverInterface
                 $getBoundaryFromNode = function (TypeNode $node) {
                     if ($node instanceof IdentifierTypeNode) {
                         return match ($node->name) {
-                            'min' => \PHP_INT_MIN,
-                            'max' => \PHP_INT_MAX,
-                            default => throw new \DomainException(\sprintf('Invalid int range value "%s".', $node->name)),
+                            'min' => PHP_INT_MIN,
+                            'max' => PHP_INT_MAX,
+                            default => throw new DomainException(sprintf('Invalid int range value "%s".', $node->name)),
                         };
                     }
 
                     if ($node->constExpr instanceof ConstExprIntegerNode) {
-                        return (int) $node->constExpr->value;
+                        return (int)$node->constExpr->value;
                     }
 
-                    throw new \DomainException(\sprintf('Invalid int range expression "%s".', \get_class($node->constExpr)));
+                    throw new DomainException(sprintf('Invalid int range expression "%s".', get_class($node->constExpr)));
                 };
 
-                $boundaries = array_map(static fn (TypeNode $t): int => $getBoundaryFromNode($t), $node->genericTypes);
+                $boundaries = array_map(static fn(TypeNode $t): int => $getBoundaryFromNode($t), $node->genericTypes);
 
                 return Type::intRange($boundaries[0], $boundaries[1]);
             }
 
-            $variableTypes = array_map(fn (TypeNode $t): BaseType => $this->getTypeFromNode($t, $typeContext), $node->genericTypes);
+            $variableTypes = array_map(fn(TypeNode $t): BaseType => $this->getTypeFromNode($t, $typeContext), $node->genericTypes);
 
             if ($type instanceof CollectionType) {
                 $asList = $type->isList();
@@ -219,19 +236,25 @@ final class StringTypeResolver implements TypeResolverInterface
                     $type = $type->getWrappedType();
                 }
 
-                if (1 === \count($variableTypes)) {
+                if (1 === count($variableTypes)) {
                     return new CollectionType(Type::generic($type, $keyType, $variableTypes[0]), $asList);
-                } elseif (2 === \count($variableTypes)) {
+                } elseif (2 === count($variableTypes)) {
                     return Type::collection($type, $variableTypes[1], $variableTypes[0], $asList);
                 }
             }
 
             if ($typeIsCollectionObject($type)) {
-                return match (\count($variableTypes)) {
+                return match (count($variableTypes)) {
                     1 => Type::collection($type, $variableTypes[0]),
                     2 => Type::collection($type, $variableTypes[1], $variableTypes[0]),
                     default => Type::collection($type),
                 };
+            }
+
+            if ($type instanceof ExplicitType
+                && in_array($type->getExplicitType(), ['class-string', 'interface-string', 'trait-string'], true)
+                && 1 === count($variableTypes) && $variableTypes[0] instanceof ObjectType) {
+                return Type::classLike($type->getExplicitType(), $variableTypes[0]);
             }
 
             if ($type instanceof BuiltinType && TypeIdentifier::ARRAY !== $type->getTypeIdentifier() && TypeIdentifier::ITERABLE !== $type->getTypeIdentifier()) {
@@ -258,10 +281,10 @@ final class StringTypeResolver implements TypeResolverInterface
         }
 
         if ($node instanceof IntersectionTypeNode) {
-            return Type::intersection(...array_map(fn (TypeNode $t): BaseType => $this->getTypeFromNode($t, $typeContext), $node->types));
+            return Type::intersection(...array_map(fn(TypeNode $t): BaseType => $this->getTypeFromNode($t, $typeContext), $node->types));
         }
 
-        throw new \DomainException(\sprintf('Unhandled "%s" node.', $node::class));
+        throw new DomainException(sprintf('Unhandled "%s" node.', $node::class));
     }
 
     private function resolveCustomIdentifier(string $identifier, ?TypeContext $typeContext): BaseType
@@ -275,15 +298,15 @@ final class StringTypeResolver implements TypeResolverInterface
                 self::$classExistCache[$className] = true;
             } else {
                 try {
-                    new \ReflectionClass($className);
+                    new ReflectionClass($className);
                     self::$classExistCache[$className] = true;
-                } catch (\Throwable) {
+                } catch (Throwable) {
                 }
             }
         }
 
         if (self::$classExistCache[$className]) {
-            if (is_subclass_of($className, \UnitEnum::class)) {
+            if (is_subclass_of($className, UnitEnum::class)) {
                 return Type::enum($className);
             }
 
@@ -298,6 +321,6 @@ final class StringTypeResolver implements TypeResolverInterface
             return $typeContext->typeAliases[$identifier];
         }
 
-        throw new \DomainException(\sprintf('Unhandled "%s" identifier.', $identifier));
+        throw new DomainException(sprintf('Unhandled "%s" identifier.', $identifier));
     }
 }
