@@ -5,3 +5,28 @@ TypeInfoExtras
 ==============
 
 Library adding some extra features to the Symfony [Type Info](https://github.com/symfony/type-info) component.
+
+Based on the [type-info:7.3](https://github.com/symfony/type-info/tree/7.3) branch.
+
+Usage
+-----
+
+```php
+
+use Radebatz\TypeInfoExtras\TypeResolver\StringTypeResolver as ExtraStringTypeResolver;
+
+$resolver = new ExtraStringTypeResolver();
+
+$type = $resolver->resolve('html-escaped-string');
+echo get_class($type); //  Radebatz\TypeInfoExtras\Type\ExplicitType
+echo $type->getExplicitType() // "html-escaped-string"
+
+$type = $resolver->resolve('class-string<Foo>');
+echo get_class($type); //  Radebatz\TypeInfoExtras\Type\ClassLikeType
+echo $type->getExplicitType() // "class-string"
+echo get_class($type->getObjectType()); // Symfony\Component\TypeInfo\Type\ObjectType
+echo $type->getObjectType(); // Foo
+
+$type = $resolver->resolve('int<5,20>');
+echo get_class($type); //  Radebatz\TypeInfoExtras\Type\IntRangeType
+```
