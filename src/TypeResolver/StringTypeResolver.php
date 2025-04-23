@@ -33,7 +33,6 @@ use PHPStan\PhpDocParser\Parser\ConstExprParser;
 use PHPStan\PhpDocParser\Parser\TokenIterator;
 use PHPStan\PhpDocParser\Parser\TypeParser;
 use PHPStan\PhpDocParser\ParserConfig;
-use Radebatz\TypeInfoExtras\Type\ExplicitType;
 use Radebatz\TypeInfoExtras\Type\Type;
 use Symfony\Component\TypeInfo\Exception\InvalidArgumentException;
 use Symfony\Component\TypeInfo\Exception\UnsupportedException;
@@ -41,7 +40,6 @@ use Symfony\Component\TypeInfo\Type as BaseType;
 use Symfony\Component\TypeInfo\Type\BuiltinType;
 use Symfony\Component\TypeInfo\Type\CollectionType;
 use Symfony\Component\TypeInfo\Type\GenericType;
-use Symfony\Component\TypeInfo\Type\ObjectType;
 use Symfony\Component\TypeInfo\TypeContext\TypeContext;
 use Symfony\Component\TypeInfo\TypeIdentifier;
 use Symfony\Component\TypeInfo\TypeResolver\TypeResolverInterface;
@@ -55,6 +53,8 @@ use Symfony\Component\TypeInfo\TypeResolver\TypeResolverInterface;
  */
 final class StringTypeResolver implements TypeResolverInterface
 {
+    use ResolverExtrasTrait;
+
     /**
      * @var array<string, bool>
      */
@@ -189,25 +189,7 @@ final class StringTypeResolver implements TypeResolverInterface
 
             // handle integer ranges
             if ($type->isIdentifiedBy(TypeIdentifier::INT)) {
-                $getBoundaryFromNode = function (TypeNode $node) {
-                    if ($node instanceof IdentifierTypeNode) {
-                        return match ($node->name) {
-                            'min' => \PHP_INT_MIN,
-                            'max' => \PHP_INT_MAX,
-                            default => throw new \DomainException(\sprintf('Invalid int range value "%s".', $node->name)),
-                        };
-                    }
-
-                    if ($node instanceof ConstTypeNode && $node->constExpr instanceof ConstExprIntegerNode) {
-                        return (int) $node->constExpr->value;
-                    }
-
-                    throw new \DomainException(\sprintf('Invalid int range expression "%s".', \get_class($node)));
-                };
-
-                $boundaries = array_map(static fn (TypeNode $t): int => $getBoundaryFromNode($t), $node->genericTypes);
-
-                return Type::intRange($boundaries[0], $boundaries[1]);
+                return $this->resolveIntRange($node);
             }
 
             $variableTypes = array_map(fn (TypeNode $t): BaseType => $this->getTypeFromNode($t, $typeContext), $node->genericTypes);
@@ -236,10 +218,8 @@ final class StringTypeResolver implements TypeResolverInterface
                 };
             }
 
-            if ($type instanceof ExplicitType
-                && \in_array($type->getExplicitType(), ['class-string', 'interface-string', 'trait-string'], true)
-                && 1 === \count($variableTypes) && $variableTypes[0] instanceof ObjectType) {
-                return Type::classLike($type->getExplicitType(), $variableTypes[0]);
+            if ($classLike = $this->tryAsClassLike($type, $variableTypes)) {
+                return $classLike;
             }
 
             if ($type instanceof BuiltinType && TypeIdentifier::ARRAY !== $type->getTypeIdentifier() && TypeIdentifier::ITERABLE !== $type->getTypeIdentifier()) {
