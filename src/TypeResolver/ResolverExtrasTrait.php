@@ -4,6 +4,7 @@ namespace Radebatz\TypeInfoExtras\TypeResolver;
 
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprIntegerNode;
 use PHPStan\PhpDocParser\Ast\Type\ConstTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use Radebatz\TypeInfoExtras\Type\ClassLikeType;
@@ -15,7 +16,7 @@ use Symfony\Component\TypeInfo\Type\ObjectType;
 
 trait ResolverExtrasTrait
 {
-    public function resolveIntRange(TypeNode $node): IntRangeType
+    public function resolveIntRange(GenericTypeNode $node): IntRangeType
     {
         $getBoundaryFromNode = function (TypeNode $node) {
             if ($node instanceof IdentifierTypeNode) {
@@ -33,7 +34,7 @@ trait ResolverExtrasTrait
             throw new \DomainException(\sprintf('Invalid int range expression "%s".', \get_class($node)));
         };
 
-        $boundaries = array_map(static fn (TypeNode $t): int => $getBoundaryFromNode($t), $node->genericTypes);
+        $boundaries = array_map(fn (TypeNode $t): int => $getBoundaryFromNode($t), $node->genericTypes);
 
         return Type::intRange($boundaries[0], $boundaries[1]);
     }
