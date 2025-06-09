@@ -27,7 +27,7 @@
   "require": {
     "php": ">=8.2",
     "phpstan/phpdoc-parser": "^2.0",
-    "symfony/type-info": "^7.3.x-dev"
+    "symfony/type-info": "^7.3"
   },
   "autoload": {
     "psr-4": { "Radebatz\\TypeInfoExtras\\": "src" },
@@ -61,6 +61,5 @@
     "analyse": [
       "export XDEBUG_MODE=off && phpstan analyse --memory-limit=2G"
     ]
-  },
-  "minimum-stability": "dev"
+  }
 }
