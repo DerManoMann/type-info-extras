@@ -1,2 +1,7 @@
 parameters:
 	ignoreErrors:
+		-
+			message: '#^Instanceof between PHPStan\\PhpDocParser\\Ast\\Type\\IdentifierTypeNode and PHPStan\\PhpDocParser\\Ast\\Type\\IdentifierTypeNode will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: src/TypeResolver/StringTypeResolver.php
