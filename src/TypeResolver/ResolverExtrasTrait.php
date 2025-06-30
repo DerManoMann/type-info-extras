@@ -16,7 +16,7 @@ use Symfony\Component\TypeInfo\Type\ObjectType;
 
 trait ResolverExtrasTrait
 {
-    public function resolveIntRange(GenericTypeNode $node): IntRangeType
+    protected function resolveIntRange(GenericTypeNode $node): IntRangeType
     {
         $getBoundaryFromNode = function (TypeNode $node) {
             if ($node instanceof IdentifierTypeNode) {
@@ -42,7 +42,7 @@ trait ResolverExtrasTrait
     /**
      * @param array<BaseType> $variableTypes
      */
-    public function tryAsClassLike(BaseType $type, array $variableTypes): ?ClassLikeType
+    protected function tryAsClassLike(BaseType $type, array $variableTypes): ?ClassLikeType
     {
         if ($type instanceof ExplicitType
             && \in_array($type->getExplicitType(), ['class-string', 'interface-string', 'trait-string'], true)
