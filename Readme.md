@@ -6,7 +6,7 @@ TypeInfoExtras
 
 Library adding some extra features to the Symfony [Type Info](https://github.com/symfony/type-info) component.
 
-Based on the [type-info:7.3](https://github.com/symfony/type-info/tree/7.3) branch.
+Compatible wit [type-info:7.3.8+](https://github.com/symfony/type-info/tree/7.3) branch.
 
 Basic Usage
 -----------
