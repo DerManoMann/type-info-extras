@@ -60,6 +60,7 @@ class StringTypeResolverTest extends BaseTypeResolverTest
         yield [Type::union(Type::intRange(to: -1), Type::intRange(from: 1)), 'non-zero-int'];
         yield [Type::intRange(0, 100), 'int<0, 100>'];
         yield [Type::intRange(), 'int<min, max>'];
+        yield [Type::array(Type::bool(), Type::int()), 'array<positive-int, bool>'];
 
         yield [Type::explicit(TypeIdentifier::STRING, 'class-string'), 'class-string'];
         yield [Type::classLike('class-string', Type::object(Dummy::class)), sprintf('class-string<%s>', Dummy::class)];

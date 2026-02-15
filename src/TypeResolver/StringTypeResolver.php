@@ -286,7 +286,7 @@ final class StringTypeResolver implements TypeResolverInterface
                         throw new \DomainException(\sprintf('"%s" type cannot have a key type defined.', $node->type));
                     }
 
-                    return Type::collection($type, $variableTypes[1], $variableTypes[0], $asList);
+                    return Type::collection($type, $variableTypes[1], $this->reduceToBuiltinType($variableTypes[0]), $asList);
                 }
             }
 
