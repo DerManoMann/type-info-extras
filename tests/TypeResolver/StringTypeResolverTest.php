@@ -31,6 +31,9 @@ class StringTypeResolverTest extends BaseTypeResolverTest
         $this->resolver = new StringTypeResolver();
     }
 
+    /**
+     * @return iterable<array{BaseType, string, 2?: TypeContext|null}>
+     */
     public static function extrasResolveDataProvider(): iterable
     {
         foreach (parent::resolveDataProvider() as $key => $set) {
@@ -71,13 +74,13 @@ class StringTypeResolverTest extends BaseTypeResolverTest
     }
 
     #[DataProvider('extrasResolveDataProvider')]
-    public function testResolve(BaseType $expectedType, string $string, ?TypeContext $typeContext = null)
+    public function testResolve(BaseType $expectedType, string $string, ?TypeContext $typeContext = null): void
     {
         $this->assertEquals($expectedType, $this->resolver->resolve($string, $typeContext));
     }
 
     #[DataProvider('extrasResolveDataProvider')]
-    public function testResolveStringable(BaseType $expectedType, string $string, ?TypeContext $typeContext = null)
+    public function testResolveStringable(BaseType $expectedType, string $string, ?TypeContext $typeContext = null): void
     {
         $this->assertEquals($expectedType, $this->resolver->resolve(new class ($string) implements \Stringable {
             public function __construct(private string $value)
