@@ -8,12 +8,12 @@ use Symfony\Component\TypeInfo\TypeIdentifier;
 
 class ExplicitTypeTest extends TestCase
 {
-    public function testToString()
+    public function testToString(): void
     {
         $this->assertSame('numeric-int', (string) new ExplicitType(TypeIdentifier::INT, 'numeric-int'));
     }
 
-    public function testIsIdentifiedBy()
+    public function testIsIdentifiedBy(): void
     {
         $this->assertFalse((new ExplicitType(TypeIdentifier::INT, 'numeric-int'))->isIdentifiedBy(TypeIdentifier::ARRAY));
         $this->assertTrue((new ExplicitType(TypeIdentifier::INT, 'numeric-int'))->isIdentifiedBy(TypeIdentifier::INT));
@@ -23,7 +23,7 @@ class ExplicitTypeTest extends TestCase
         $this->assertTrue((new ExplicitType(TypeIdentifier::INT, 'numeric-int'))->isIdentifiedBy('string', 'int'));
     }
 
-    public function testIsNullable()
+    public function testIsNullable(): void
     {
         $this->assertFalse((new ExplicitType(TypeIdentifier::INT, 'numeric-int'))->isNullable());
     }

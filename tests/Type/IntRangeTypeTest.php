@@ -9,7 +9,7 @@ use Radebatz\TypeInfoExtras\Type\Type;
 
 class IntRangeTypeTest extends TestCase
 {
-    public function testToString()
+    public function testToString(): void
     {
         $this->assertSame('int<0, max>', (string) new IntRangeType(from: 0, explicitType: 'int<0, max>'));
         $this->assertSame('int<min, 0>', (string) new IntRangeType(to: 0, explicitType: 'int<min, 0>'));
@@ -21,7 +21,7 @@ class IntRangeTypeTest extends TestCase
         $this->assertSame('int<min, 5>', (string) new IntRangeType(to: 5, explicitType: 'int<min, 5>'));
     }
 
-    public function testAccepts()
+    public function testAccepts(): void
     {
         $this->assertFalse((new IntRangeType(from: 0, to: 5, explicitType: 'int<0, 5>'))->accepts('string'));
         $this->assertFalse((new IntRangeType(from: 0, to: 5, explicitType: 'int<0, 5>'))->accepts([]));
