@@ -12,3 +12,4 @@ parameters:
     excludePaths:
         - 'tests/Fixtures/*'
     treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: false
