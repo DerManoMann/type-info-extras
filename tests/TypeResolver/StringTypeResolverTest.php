@@ -9,7 +9,10 @@ use Radebatz\TypeInfoExtras\Type\ExplicitType;
 use Radebatz\TypeInfoExtras\Type\IntRangeType;
 use Radebatz\TypeInfoExtras\Type\Type;
 use Radebatz\TypeInfoExtras\TypeResolver\StringTypeResolver;
+use Symfony\Component\TypeInfo\Exception\InvalidArgumentException;
+use Symfony\Component\TypeInfo\Exception\UnsupportedException;
 use Symfony\Component\TypeInfo\Tests\Fixtures\Dummy;
+use Symfony\Component\TypeInfo\Tests\Fixtures\DummyWithConstants;
 use Symfony\Component\TypeInfo\Tests\TypeResolver\StringTypeResolverTest as BaseTypeResolverTest;
 use Symfony\Component\TypeInfo\Type as BaseType;
 use Symfony\Component\TypeInfo\Type\UnionType;
@@ -92,5 +95,32 @@ class StringTypeResolverTest extends BaseTypeResolverTest
                 return $this->value;
             }
         }, $typeContext));
+    }
+
+    /*
+     * The two cases below are already covered by the parent class, but its `$resolver` is a
+     * private property typed as the (final) upstream `StringTypeResolver`. Inherited tests
+     * therefore read the parent's own slot and assert against the upstream resolver, not this
+     * one -- so the ported behaviour they cover would go untested here. Overriding them is the
+     * only way to point them at this resolver; both fail if the corresponding guard in
+     * `StringTypeResolver` is dropped.
+     *
+     * Once upstream widens that property to `protected TypeResolverInterface`, the inherited
+     * tests exercise this resolver on their own and these two overrides can go.
+     */
+
+    #[DataProvider('classKeywordConstantDataProvider')]
+    public function testCannotResolveClassKeywordConstantWithoutTypeContext(string $type, string $keyword): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(sprintf('A "%s" must be provided to resolve "%s".', TypeContext::class, $keyword));
+
+        $this->resolver->resolve($type);
+    }
+
+    public function testCannotResolveUnknownConstant(): void
+    {
+        $this->expectException(UnsupportedException::class);
+        $this->resolver->resolve(DummyWithConstants::class . '::UNKNOWN');
     }
 }
