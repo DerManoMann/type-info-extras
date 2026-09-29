@@ -109,7 +109,21 @@ class StringTypeResolverTest extends BaseTypeResolverTest
      * tests exercise this resolver on their own and these two overrides can go.
      */
 
-    #[DataProvider('classKeywordConstantDataProvider')]
+    /**
+     * Upstream has a provider of its own for this, but only from `symfony/type-info` 7.4.20 /
+     * 8.1.8 on -- inheriting it makes the suite error out on every older version this package
+     * still supports. The cases are the guard's own, so they live here.
+     *
+     * @return iterable<array{0: string, 1: string}>
+     */
+    public static function extrasClassKeywordConstantDataProvider(): iterable
+    {
+        yield ['self::FOO', 'self'];
+        yield ['static::FOO_*', 'static'];
+        yield ['parent::FOO', 'parent'];
+    }
+
+    #[DataProvider('extrasClassKeywordConstantDataProvider')]
     public function testCannotResolveClassKeywordConstantWithoutTypeContext(string $type, string $keyword): void
     {
         $this->expectException(InvalidArgumentException::class);
