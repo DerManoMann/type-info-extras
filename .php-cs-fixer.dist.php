@@ -3,16 +3,6 @@
 $finder = PhpCsFixer\Finder::create()
     ->path('src')->name('*.php')
     ->path('tests')->name('*.php')
-    ->filter(function (\SplFileInfo $file) {
-        return
-            // ContextTest::testFullyQualifiedName relies on the 'use Exception' statement...
-            !strpos($file->getPathname(), 'tests/Fixtures/Customer.php')
-            // multi arg use; 'use a, b;`
-            && !strpos($file->getPathname(), 'tests/Fixtures/Parser/HelloTrait.php')
-            // FQDN in docblock
-            && !strpos($file->getPathname(), 'tests/Fixtures/TypedProperties.php')
-        ;
-    })
     ->in(__DIR__);
 
 return (new PhpCsFixer\Config())
