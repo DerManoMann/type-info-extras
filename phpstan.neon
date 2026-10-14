@@ -12,3 +12,10 @@ parameters:
     excludePaths:
         - 'tests/Fixtures/*'
     treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        -
+            # `Type::objectShape()` exists from symfony/type-info 8.1 on
+            identifier: function.alreadyNarrowedType
+            message: '#^Call to function method_exists\(\) with ''Radebatz\\\\TypeInfoExtras\\\\Type\\\\Type'' and ''objectShape'' will always evaluate to true\.$#'
+            path: src/TypeResolver/StringTypeResolver.php
+            reportUnmatched: false
