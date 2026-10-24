@@ -27,8 +27,6 @@ use const PHP_INT_MIN;
 
 class StringTypeResolverTest extends BaseTypeResolverTest
 {
-    protected StringTypeResolver $resolver;
-
     protected function setUp(): void
     {
         parent::setUp();
