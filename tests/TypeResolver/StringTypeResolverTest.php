@@ -42,8 +42,8 @@ class StringTypeResolverTest extends BaseTypeResolverTest
     {
         foreach (parent::resolveDataProvider() as $key => $set) {
             $typeName = $set[1];
-            if (str_ends_with($typeName, '-string')) {
-                $set[0] = new ExplicitType(TypeIdentifier::STRING, $typeName);
+            if (str_ends_with(strtolower($typeName), '-string')) {
+                $set[0] = new ExplicitType(TypeIdentifier::STRING, strtolower($typeName));
             }
 
             $set[0] = match ($typeName) {
@@ -68,9 +68,13 @@ class StringTypeResolverTest extends BaseTypeResolverTest
         yield [Type::intRange(0, 100), 'int<0, 100>'];
         yield [Type::intRange(), 'int<min, max>'];
         yield [Type::array(Type::bool(), Type::int()), 'array<positive-int, bool>'];
+        yield [Type::intRange(from: 1, explicitType: 'positive-int'), 'Positive-Int'];
+        yield [Type::union(Type::intRange(to: -1), Type::intRange(from: 1)), 'NON-ZERO-INT'];
+        yield [Type::intRange(0, 100), 'Int<0, 100>'];
 
         yield [Type::explicit(TypeIdentifier::STRING, 'class-string'), 'class-string'];
         yield [Type::classLike('class-string', Type::object(Dummy::class)), sprintf('class-string<%s>', Dummy::class)];
+        yield [Type::explicit(TypeIdentifier::STRING, 'class-string'), 'Class-String'];
         yield [Type::explicit(TypeIdentifier::STRING, 'trait-string'), 'trait-string'];
         yield [Type::classLike('trait-string', Type::object(DummyTrait::class)), sprintf('trait-string<%s>', DummyTrait::class)];
         yield [Type::explicit(TypeIdentifier::STRING, 'interface-string'), 'interface-string'];
