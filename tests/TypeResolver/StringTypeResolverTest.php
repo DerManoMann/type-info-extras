@@ -137,6 +137,57 @@ class StringTypeResolverTest extends BaseTypeResolverTest
         $this->resolver->resolve($type);
     }
 
+    /**
+     * Upstream has providers of its own for these two, but only from `symfony/type-info` 7.4.23 /
+     * 8.1.11 on, and the inherited tests would run against the upstream resolver anyway (see above).
+     *
+     * @return iterable<array{0: string}>
+     */
+    public static function extrasIntersectionOfNonObjectTypesDataProvider(): iterable
+    {
+        yield ['array{foo: int}&array{foo: string}'];
+        yield ['array{foo: int}&array{bar: string, ...}'];
+        yield ['array{foo: int, ...<string, int>}&array{bar: int, ...}'];
+        yield ['array{foo: int}&array<string, int>'];
+        yield ['int&string'];
+        yield [sprintf('%s&array{foo: int}', \DateTime::class)];
+        yield [sprintf('int|(%s&array{foo: int})', \DateTime::class)];
+        yield ['positive-int&non-empty-string'];
+    }
+
+    #[DataProvider('extrasIntersectionOfNonObjectTypesDataProvider')]
+    public function testCannotResolveIntersectionOfNonObjectTypes(string $type): void
+    {
+        $this->expectException(UnsupportedException::class);
+        $this->resolver->resolve($type);
+    }
+
+    /**
+     * @return iterable<array{0: string}>
+     */
+    public static function extrasUnionWithStandaloneTypeDataProvider(): iterable
+    {
+        yield ['void|int'];
+        yield ['never|int'];
+        yield ['?void'];
+        yield ['?never'];
+        yield ['void|positive-int'];
+    }
+
+    #[DataProvider('extrasUnionWithStandaloneTypeDataProvider')]
+    public function testCannotResolveUnionWithStandaloneType(string $type): void
+    {
+        $this->expectException(UnsupportedException::class);
+        $this->resolver->resolve($type);
+    }
+
+    public function testRedundantUnionsKeepRefinements(): void
+    {
+        $this->assertEquals(Type::union(Type::bool(), Type::intRange(from: 1, explicitType: 'positive-int')), $this->resolver->resolve('true|false|positive-int'));
+        $this->assertEquals(Type::union(Type::bool(), Type::explicit(TypeIdentifier::STRING, 'non-empty-string')), $this->resolver->resolve('bool|true|non-empty-string'));
+        $this->assertEquals(Type::union(Type::intRange(to: -1), Type::intRange(from: 1), Type::null()), $this->resolver->resolve('non-zero-int|null'));
+    }
+
     public function testCannotResolveUnknownConstant(): void
     {
         $this->expectException(UnsupportedException::class);
