@@ -25,7 +25,7 @@ use function sprintf;
 use const PHP_INT_MAX;
 use const PHP_INT_MIN;
 
-class StringTypeResolverTest extends BaseTypeResolverTest
+final class StringTypeResolverTest extends BaseTypeResolverTest
 {
     protected StringTypeResolver $resolver;
 
