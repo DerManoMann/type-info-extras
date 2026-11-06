@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Radebatz\TypeInfoExtras\Type\ExplicitType;
 use Symfony\Component\TypeInfo\TypeIdentifier;
 
-class ExplicitTypeTest extends TestCase
+final class ExplicitTypeTest extends TestCase
 {
     public function testToString(): void
     {

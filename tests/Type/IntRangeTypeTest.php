@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 use Radebatz\TypeInfoExtras\Type\IntRangeType;
 use Radebatz\TypeInfoExtras\Type\Type;
 
-class IntRangeTypeTest extends TestCase
+final class IntRangeTypeTest extends TestCase
 {
     public function testToString(): void
     {
