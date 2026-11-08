@@ -3,17 +3,20 @@
 $finder = PhpCsFixer\Finder::create()
     ->path('src')->name('*.php')
     ->path('tests')->name('*.php')
-    ->in(__DIR__);
+    // a fork of symfony/type-info's, kept close to upstream so changes there can be ported
+    ->notPath('src/TypeResolver/StringTypeResolver.php')
+    ->in(__DIR__)
+;
 
 return (new PhpCsFixer\Config())
     ->setRules([
         '@PSR12' => true,
-        '@DoctrineAnnotation' => true,
         'blank_line_after_opening_tag' => false,
         'array_syntax' => ['syntax' => 'short'],
+        'ordered_imports' => ['imports_order' => ['class', 'function', 'const']],
         'no_unused_imports' => true,
         'blank_line_before_statement' => ['statements' => ['return']],
-        'visibility_required' => true,
+        'modifier_keywords' => true,
         'cast_spaces' => ['space' => 'single'],
         'concat_space' => ['spacing' => 'one'],
         'type_declaration_spaces' => true,
@@ -40,9 +43,10 @@ return (new PhpCsFixer\Config())
         'trim_array_spaces' => true,
         'single_space_around_construct' => true,
         'single_line_comment_spacing' => true,
-        'fully_qualified_strict_types' => true,
+        'fully_qualified_strict_types' => ['import_symbols' => true, 'leading_backslash_in_global_namespace' => true],
         'global_namespace_import' => ['import_classes' => false, 'import_constants' => null, 'import_functions' => null],
 
+        'attribute_empty_parentheses' => ['use_parentheses' => false],
         'nullable_type_declaration_for_default_null_value' => true,
 
         'no_empty_phpdoc' => true,
@@ -65,5 +69,9 @@ return (new PhpCsFixer\Config())
         'phpdoc_no_empty_return' => true,
         'phpdoc_no_alias_tag' => true,
         'phpdoc_param_order' => true,
+        'multiline_comment_opening_closing' => true,
+
+        'php_unit_attributes' => true,
     ])
-    ->setFinder($finder);
+    ->setFinder($finder)
+    ;
