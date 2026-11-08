@@ -1,6 +1,8 @@
-/.idea/
-/composer.lock
-/vendor/
-/.php-cs-fixer.cache
-/.phpunit.result.cache
-/.phpunit.cache
+.idea/
+.php_cs.cache
+.php-cs-fixer.cache
+.phpunit.cache/
+.phpunit.result.cache
+composer.lock
+vendor/
+/.claude/settings.local.json
