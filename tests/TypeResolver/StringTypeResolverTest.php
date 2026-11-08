@@ -53,6 +53,8 @@ final class StringTypeResolverTest extends BaseTypeResolverTest
                 'non-negative-int' => new IntRangeType(from: 0, to: PHP_INT_MAX, explicitType: $typeName),
                 'non-zero-int' => new UnionType(new IntRangeType(from: PHP_INT_MIN, to: -1), new IntRangeType(from: 1, to: PHP_INT_MAX)),
                 'int<0, 100>' => new IntRangeType(from: 0, to: 100),
+                // the range stays beside "int", as refinements do in a redundant union
+                'positive-int|0|null' => Type::nullable(Type::union(new IntRangeType(from: 1, to: PHP_INT_MAX, explicitType: 'positive-int'), Type::int())),
                 default => $set[0],
             };
 
