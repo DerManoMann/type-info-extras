@@ -28,3 +28,15 @@ parameters:
             message: '#^Strict comparison using \!\=\= between null and string will always evaluate to true\.$#'
             path: src/TypeResolver/StringTypeResolver.php
             reportUnmatched: false
+        -
+            # `ArrayShapeType` takes `$isList` from symfony/symfony#67933 on, called only where it does
+            identifier: arguments.count
+            message: '#^Class Symfony\\Component\\TypeInfo\\Type\\ArrayShapeType constructor invoked with 4 parameters, 1\-3 required\.$#'
+            path: src/TypeResolver/StringTypeResolver.php
+            reportUnmatched: false
+        -
+            # `TypeContext::$inheritedTemplateTypes` exists from symfony/symfony@724a5333f0 on, read through `??`
+            identifier: property.notFound
+            message: '#^Access to an undefined property Symfony\\Component\\TypeInfo\\TypeContext\\TypeContext\:\:\$inheritedTemplateTypes\.$#'
+            path: src/TypeResolver/StringTypeResolver.php
+            reportUnmatched: false
