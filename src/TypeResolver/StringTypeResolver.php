@@ -31,6 +31,7 @@ use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 use PHPStan\PhpDocParser\Lexer\Lexer;
 use PHPStan\PhpDocParser\Parser\ConstExprParser;
+use PHPStan\PhpDocParser\Parser\ParserException;
 use PHPStan\PhpDocParser\Parser\TokenIterator;
 use PHPStan\PhpDocParser\Parser\TypeParser;
 use PHPStan\PhpDocParser\ParserConfig;
@@ -67,6 +68,11 @@ final class StringTypeResolver implements TypeResolverInterface
     private static array $classExistCache = [];
 
     /**
+     * Whether `ArrayShapeType` takes `$isList`, which symfony/type-info added after 8.1.
+     */
+    private static ?bool $hasListShapes = null;
+
+    /**
      * @var array<string, true>
      */
     private array $resolvingExtraTypeAliases = [];
@@ -96,7 +102,7 @@ final class StringTypeResolver implements TypeResolverInterface
 
         try {
             return $this->getTypeFromNode($this->parse($subject), $typeContext);
-        } catch (\DomainException $e) {
+        } catch (\DomainException|ParserException $e) {
             throw new UnsupportedException(\sprintf('Cannot resolve "%s".', $subject), $subject, previous: $e);
         }
     }
@@ -128,6 +134,16 @@ final class StringTypeResolver implements TypeResolverInterface
                 }
 
                 $shape[$item->keyName instanceof ConstExprStringNode ? $item->keyName->value : (string) $item->keyName] = $shapeItem;
+            }
+
+            if (\in_array($node->kind, ['list', 'non-empty-list'], true) && self::hasListShapes()) {
+                $extraValueType = $node->sealed ? null : ($node->unsealedType?->valueType ? $this->getTypeFromNode($node->unsealedType->valueType, $typeContext) : Type::mixed());
+
+                try {
+                    return new ArrayShapeType($shape, $extraValueType ? Type::int() : null, $extraValueType, true);
+                } catch (InvalidArgumentException $e) {
+                    throw new \DomainException($e->getMessage(), previous: $e);
+                }
             }
 
             return Type::arrayShape(
@@ -328,6 +344,11 @@ final class StringTypeResolver implements TypeResolverInterface
                 }
 
                 foreach ($type instanceof UnionType ? $type->getTypes() : [$type] as $t) {
+                    // "int|int" and "'a'|'b'" mean "int" and "string"
+                    if (\in_array($t, $types)) {
+                        continue;
+                    }
+
                     $types[] = $t;
 
                     if ($t instanceof BuiltinType) {
@@ -353,7 +374,20 @@ final class StringTypeResolver implements TypeResolverInterface
         }
 
         if ($node instanceof IntersectionTypeNode) {
-            $types = array_map(fn (TypeNode $t): BaseType => $this->getTypeFromNode($t, $typeContext), $node->types);
+            $types = [];
+
+            foreach ($node->types as $nodeType) {
+                $type = $this->getTypeFromNode($nodeType, $typeContext);
+
+                if (!\in_array($type, $types)) {
+                    $types[] = $type;
+                }
+            }
+
+            if (1 === \count($types)) {
+                return $types[0];
+            }
+
             $shapes = array_filter($types, static fn (BaseType $t): bool => $t instanceof ArrayShapeType);
 
             if (\count($shapes) === \count($types)) {
@@ -443,6 +477,10 @@ final class StringTypeResolver implements TypeResolverInterface
             return Type::object($className);
         }
 
+        if (null !== $type = $typeContext?->inheritedTemplateTypes[$identifier] ?? null) {
+            return $type;
+        }
+
         if (isset($typeContext?->templates[$identifier])) {
             return Type::template($identifier, $typeContext->templates[$identifier]);
         }
@@ -503,11 +541,14 @@ final class StringTypeResolver implements TypeResolverInterface
         $shape = [];
         $extraKeyType = $types[0]->getExtraKeyType();
         $extraValueType = $types[0]->getExtraValueType();
+        $isList = false;
 
         foreach ($types as $type) {
             if ((string) $extraKeyType !== (string) $type->getExtraKeyType() || (string) $extraValueType !== (string) $type->getExtraValueType()) {
                 throw new \DomainException(\sprintf('Cannot merge "%s" and "%s".', $types[0], $type));
             }
+
+            $isList = $isList || $type->isList();
 
             foreach ($type->getShape() as $key => $item) {
                 if (isset($shape[$key]) && (string) $shape[$key]['type'] !== (string) $item['type']) {
@@ -518,6 +559,13 @@ final class StringTypeResolver implements TypeResolverInterface
             }
         }
 
-        return new ArrayShapeType($shape, $extraKeyType, $extraValueType);
+        return $isList
+            ? new ArrayShapeType($shape, $extraKeyType, $extraValueType, true)
+            : new ArrayShapeType($shape, $extraKeyType, $extraValueType);
+    }
+
+    private static function hasListShapes(): bool
+    {
+        return self::$hasListShapes ??= (new \ReflectionMethod(ArrayShapeType::class, '__construct'))->getNumberOfParameters() > 3;
     }
 }
