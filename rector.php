@@ -7,6 +7,7 @@ use Rector\Php81\Rector\Property\ReadOnlyPropertyRector;
 use Rector\ValueObject\PhpVersion;
 
 return RectorConfig::configure()
+    ->withCache(cacheDirectory: __DIR__ . '/.cache/rector', containerCacheDirectory: __DIR__ . '/vendor')
     ->withSkipPath(__DIR__ . '/tests/Fixtures')
     // a fork of symfony/type-info's, kept close to upstream so changes there can be ported
     ->withSkipPath(__DIR__ . '/src/TypeResolver/StringTypeResolver.php')
