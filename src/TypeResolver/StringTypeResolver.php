@@ -35,6 +35,7 @@ use PHPStan\PhpDocParser\Parser\ParserException;
 use PHPStan\PhpDocParser\Parser\TokenIterator;
 use PHPStan\PhpDocParser\Parser\TypeParser;
 use PHPStan\PhpDocParser\ParserConfig;
+use Radebatz\TypeInfoExtras\Type\ExplicitType;
 use Radebatz\TypeInfoExtras\Type\Type;
 use Symfony\Component\TypeInfo\Exception\InvalidArgumentException;
 use Symfony\Component\TypeInfo\Exception\LogicException;
@@ -323,6 +324,11 @@ final class StringTypeResolver implements TypeResolverInterface
 
             if ($classLike = $this->tryAsClassLike($type, $variableTypes)) {
                 return $classLike;
+            }
+
+            // arguments a refinement cannot carry, such as a template in "class-string<T>", are dropped
+            if ($type instanceof ExplicitType) {
+                return $type;
             }
 
             if ($type instanceof BuiltinType && TypeIdentifier::ARRAY !== $type->getTypeIdentifier() && TypeIdentifier::ITERABLE !== $type->getTypeIdentifier()) {
