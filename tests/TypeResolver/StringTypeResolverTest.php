@@ -81,6 +81,14 @@ final class StringTypeResolverTest extends BaseTypeResolverTest
         yield [Type::classLike('trait-string', Type::object(DummyTrait::class)), sprintf('trait-string<%s>', DummyTrait::class)];
         yield [Type::explicit(TypeIdentifier::STRING, 'interface-string'), 'interface-string'];
         yield [Type::classLike('interface-string', Type::object(DummyInterface::class)), sprintf('interface-string<%s>', DummyInterface::class)];
+
+        // an argument that is not a class is dropped
+        $templateContext = new TypeContext(Dummy::class, Dummy::class, templates: ['T' => Type::mixed()]);
+        yield [Type::explicit(TypeIdentifier::STRING, 'class-string'), 'class-string<T>', $templateContext];
+        yield [Type::explicit(TypeIdentifier::STRING, 'interface-string'), 'interface-string<T>', $templateContext];
+        yield [Type::explicit(TypeIdentifier::STRING, 'trait-string'), 'trait-string<T>', $templateContext];
+        yield [Type::explicit(TypeIdentifier::STRING, 'class-string'), sprintf('class-string<T|%s>', Dummy::class), $templateContext];
+        yield [Type::explicit(TypeIdentifier::STRING, 'class-string'), 'class-string<int>'];
     }
 
     #[DataProvider('extrasResolveDataProvider')]
