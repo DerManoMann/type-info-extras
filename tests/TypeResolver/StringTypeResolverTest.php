@@ -70,6 +70,7 @@ final class StringTypeResolverTest extends BaseTypeResolverTest
         yield [Type::intRange(0, 100), 'int<0, 100>'];
         yield [Type::intRange(), 'int<min, max>'];
         yield [Type::array(Type::bool(), Type::int()), 'array<positive-int, bool>'];
+        yield [Type::union(Type::intRange(from: 1, explicitType: 'positive-int'), Type::string()), '($flag is true ? positive-int : string)'];
         yield [Type::intRange(from: 1, explicitType: 'positive-int'), 'Positive-Int'];
         yield [Type::union(Type::intRange(to: -1), Type::intRange(from: 1)), 'NON-ZERO-INT'];
         yield [Type::intRange(0, 100), 'Int<0, 100>'];
