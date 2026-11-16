@@ -13,6 +13,7 @@ use Radebatz\TypeInfoExtras\Type\IntRangeType;
 use Radebatz\TypeInfoExtras\Type\Type;
 use Symfony\Component\TypeInfo\Type as BaseType;
 use Symfony\Component\TypeInfo\Type\ObjectType;
+use Symfony\Component\TypeInfo\Type\UnionType;
 
 trait ResolverExtrasTrait
 {
@@ -55,6 +56,19 @@ trait ResolverExtrasTrait
 
     public function reduceToBuiltinType(?BaseType $type): ?BaseType
     {
+        // a union, such as "non-zero-int", is reduced member by member, and members that become the same are merged
+        if ($type instanceof UnionType) {
+            $types = [];
+            foreach ($type->getTypes() as $member) {
+                $member = $this->reduceToBuiltinType($member);
+                $types[(string) $member] = $member;
+            }
+
+            $types = array_values($types);
+
+            return 1 === \count($types) ? $types[0] : BaseType::union(...$types);
+        }
+
         return $type instanceof ExplicitType
             ? $type->getBuiltinType()
             : $type;
