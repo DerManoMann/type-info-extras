@@ -289,9 +289,9 @@ final class StringTypeResolver implements TypeResolverInterface
 
             $type ??= $this->getTypeFromNode($node->type, $typeContext);
 
-            // handle integer ranges
+            // handle integer ranges, a malformed one as plain "int"
             if ($type->isIdentifiedBy(TypeIdentifier::INT)) {
-                return $this->resolveIntRange($node);
+                return $this->resolveIntRange($node) ?? $type;
             }
 
             $variableTypes = array_map(fn (TypeNode $t): BaseType => $this->getTypeFromNode($t, $typeContext), $node->genericTypes);
