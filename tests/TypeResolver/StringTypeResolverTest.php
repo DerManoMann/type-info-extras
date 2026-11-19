@@ -68,7 +68,6 @@ final class StringTypeResolverTest extends BaseTypeResolverTest
         yield [Type::intRange(to: 0, explicitType: 'non-positive-int'), 'non-positive-int'];
         yield [Type::union(Type::intRange(to: -1), Type::intRange(from: 1)), 'non-zero-int'];
         yield [Type::intRange(0, 100), 'int<0, 100>'];
-        yield [Type::intRange(), 'int<min, max>'];
         yield [Type::array(Type::bool(), Type::int()), 'array<positive-int, bool>'];
         yield [Type::array(Type::bool(), Type::int()), 'array<non-zero-int, bool>'];
         yield [Type::array(Type::bool(), Type::union(Type::int(), Type::string())), 'array<positive-int|non-empty-string, bool>'];
@@ -76,6 +75,14 @@ final class StringTypeResolverTest extends BaseTypeResolverTest
         yield [Type::intRange(from: 1, explicitType: 'positive-int'), 'Positive-Int'];
         yield [Type::union(Type::intRange(to: -1), Type::intRange(from: 1)), 'NON-ZERO-INT'];
         yield [Type::intRange(0, 100), 'Int<0, 100>'];
+
+        // a malformed range is plain "int"
+        yield [Type::int(), 'int<0>'];
+        yield [Type::int(), 'int<0, 5, 9>'];
+        yield [Type::int(), 'int<5, 0>'];
+        yield [Type::int(), 'int<0, foo>'];
+        yield [Type::int(), 'int<max, 5>'];
+        yield [Type::int(), 'int<min, max>'];
 
         yield [Type::explicit(TypeIdentifier::STRING, 'class-string'), 'class-string'];
         yield [Type::classLike('class-string', Type::object(Dummy::class)), sprintf('class-string<%s>', Dummy::class)];
